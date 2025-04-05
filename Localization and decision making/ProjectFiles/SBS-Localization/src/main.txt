@@ -1,0 +1,67 @@
+#include <Arduino.h>
+
+// Defines pin numbers
+#define E_FRONT 12
+#define T_FRONT 13
+#define E_BACK 9
+#define T_BACK 8
+#define E_LEFT 3
+#define T_LEFT 2
+#define E_RIGHT 7
+#define T_RIGHT 4
+#define MOTOR_L1 10
+#define MOTOR_L2 11
+#define MOTOR_R3 5
+#define MOTOR_R4 6
+
+long duration;
+long distance;
+
+void setPins(char out, char in) {
+  pinMode(out, OUTPUT);
+  pinMode(in, INPUT);
+}
+
+void setup() {
+  Serial.begin(9600);
+
+  // Setup sensor pins
+  setPins(T_FRONT, E_FRONT);
+  setPins(T_BACK, E_BACK);
+  setPins(T_LEFT, E_LEFT);
+  setPins(T_RIGHT, E_RIGHT);
+}
+
+long readDistance(char trig, char echo, String name) {
+  digitalWrite(trig, LOW);
+  delayMicroseconds(5);  // Increased stability
+  digitalWrite(trig, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trig, LOW);
+
+  duration = pulseIn(echo, HIGH, 30000);  // Timeout after 30ms (prevents hang)
+  
+  if (duration == 0) {
+    Serial.print("Error: No echo received from ");
+    Serial.println(name);
+    return -1;  // Indicate an error
+  }
+
+  distance = duration * 0.034 / 2;
+
+  Serial.print("Distance ");
+  Serial.print(name);
+  Serial.print(": ");
+  Serial.println(distance);
+  
+  return distance;
+}
+
+void loop() {
+  readDistance(T_FRONT, E_FRONT, "Front");
+  readDistance(T_BACK, E_BACK, "Back");
+  readDistance(T_LEFT, E_LEFT, "Left");
+  readDistance(T_RIGHT, E_RIGHT, "Right");
+
+  delay(500);  // Give sensors time to reset
+}
