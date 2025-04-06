@@ -1,0 +1,20 @@
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+# Platformio 
+.pioenvs
+.piolibdeps
+.clang_complete
+.gcc-flags.json
+.pio
+Localization and decision making/ProjectFiles/SBS-Localization/src/.vscode/c_cpp_properties.json
