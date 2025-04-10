@@ -2,8 +2,8 @@
 #include <WiFiS3.h>
 #include <template.h>
 
-const char* ssid = "RobotAP";
-const char* password = "robot1234";
+const char* ssid = "Dragos's S22 Ultra";
+const char* password = "ghck0723";
 WiFiServer server(80);
 
 // Pin definitions
@@ -85,15 +85,15 @@ void loop() {
   handleWebServer();
   if (autonomousMode) {
     autonomousNavigation();
-  } else {
-    setMotorSpeed(MOTOR_LEFT, 0);
-    setMotorSpeed(MOTOR_RIGHT, 0);
-  }
+   } else {
+     setMotorSpeed(MOTOR_LEFT, 0);
+     setMotorSpeed(MOTOR_RIGHT, 0);
+   }
 }
 
 void setupWiFiAP() {
   Serial.println("Setting up AP");
-  WiFi.beginAP(ssid, password);
+  WiFi.begin(ssid, password);
   delay(2000);
   
   IPAddress IP = WiFi.localIP();
@@ -109,17 +109,20 @@ void handleWebServer() {
   if (client) {
     Serial.println("New client connected");
     String currentLine = "";
-    
+    String requestLine = "";  // <--- Capture request line here
+    bool isFirstLine = true;
+
     while (client.connected()) {
       if (client.available()) {
         char c = client.read();
-        
+        Serial.write(c);  // shows everything
         if (c == '\n') {
           if (currentLine.length() == 0) {
-            // Read request line
-            String requestLine = client.readStringUntil('\r');
-            
-            // Process GET request
+            Serial.println("End of headers");
+
+            Serial.println("Request line: " + requestLine);
+
+            // Handle /control?cmd=
             if (requestLine.indexOf("GET /control") >= 0) {
               int cmdStart = requestLine.indexOf("cmd=") + 4;
               String command = "";
@@ -127,33 +130,40 @@ void handleWebServer() {
                 if (requestLine[i] == ' ' || requestLine[i] == '&') break;
                 command += requestLine[i];
               }
-              
+
+              command.trim(); // just in case
+              Serial.println("Parsed command: " + command);
+
               processCommand(command);
+
               client.println("HTTP/1.1 200 OK");
               client.println("Content-Type: text/plain");
               client.println("Connection: close");
               client.println();
               client.println("Command received: " + command);
-            } 
-            // Map Data Request
+            }
+            // Handle /data
             else if (requestLine.indexOf("GET /data") >= 0) {
               client.println("HTTP/1.1 200 OK");
               client.println("Content-Type: text/plain");
               client.println("Connection: close");
               client.println();
-              // Send the map data string
               client.println(getMapDataString());
             } 
+            // Default response
             else {
               client.println("HTTP/1.1 200 OK");
               client.println("Content-Type: text/html");
               client.println("Connection: close");
               client.println();
-              // Render the default webpage
               client.print(webpageTemplate);
             }
             break;
           } else {
+            if (isFirstLine) {
+              requestLine = currentLine;
+              isFirstLine = false;
+            }
             currentLine = "";
           }
         } else if (c != '\r') {
@@ -161,17 +171,17 @@ void handleWebServer() {
         }
       }
     }
+
     delay(10);
     client.stop();
     Serial.println("Client disconnected");
   }
 }
 
+
 // Process commands from web interface
 void processCommand(String command) {
 
-  // Guard against empty commands
-  if (command.length() == 0) return;
 
   Serial.print("Received command: ");
   Serial.println(command);
@@ -250,6 +260,7 @@ int readDistance(int trigPin, int echoPin) {
   } else {
     return duration * 0.034 / 2;
   }
+  delay(50);
 }
 
 // Update all sensor readings
